@@ -1,0 +1,6 @@
+include/raylib.h
+obj
+lib
+.gitattributes
+notes
+*.exe
