@@ -1,4 +1,8 @@
 #include "raylib.h"
+
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
+
 #include <stdlib.h>
 
 #define GRID_SIZE 9
@@ -13,7 +17,7 @@
 typedef struct GridSquare {
   bool isPregenerated;
   bool isHint;
-  bool isClicked;
+  bool isWrong;
   int number;
 } GridSquare_t;
 
@@ -22,8 +26,12 @@ const int screenWidth = 1600;
 const int screenHeight = 900;
 
 static bool isGameInit = false;
-static bool isGamePaused = false;
-static bool isGameOver = false;
+
+static int mistakeCount = 0;
+
+static bool isSquareSelected = false;
+static int selectedRow = 0;
+static int selectedCol = 0;
 
 static GridSquare_t grid[GRID_SIZE][GRID_SIZE];
 static GridSquare_t gridSolved[GRID_SIZE][GRID_SIZE];
@@ -38,11 +46,13 @@ void game_draw(void);
 void grid_clear(void);
 bool grid_is_solved(void);
 bool grid_is_place_valid(int row, int col, int n);
+// TODO: Muy ineficiente. Demasiados bucles.
 void grid_load_random_seed(void);
 void grid_rotate_90(void);
 void grid_horizontal_flip(void);
 void grid_vertical_flip(void);
 void grid_randomly_mutate(void);
+void grid_mark_pregenerated(void);
 
 void number_bag_shuffle(void);
 
@@ -50,14 +60,13 @@ void number_bag_shuffle(void);
 int main(void) {
   srand(0);
   // 81 x 2 x 5
+  // TODO: Somehow embed seeds into the code
   gridData = (char*)MemAlloc(((SEED_LEN * 2 * SEED_AMOUNT) + 1) * sizeof(char));
   gridData = LoadFileText("seeds.txt");
   UnloadFileText("seeds.txt");
 
   InitWindow(screenWidth, screenHeight, "Shudoku");
   SetTargetFPS(60);
-
-  // TraceLog(LOG_INFO, TextFormat("%c", gridData[809]));
 
   // Main game loop
   while (!WindowShouldClose()) {
@@ -80,9 +89,13 @@ int main(void) {
 }
 
 void game_start(void) {
+  isSquareSelected = false;
+  mistakeCount = 0;
+
   grid_clear();
   grid_load_random_seed();
   grid_randomly_mutate();
+  grid_mark_pregenerated();
 }
 
 void game_update(void) {
@@ -91,12 +104,11 @@ void game_update(void) {
 
   // restart
   if (IsKeyReleased(KEY_R)) {
-    // TraceLog(LOG_INFO, TextFormat("%d %d %d %d %d %d %d %d %d", numberBag[0], numberBag[1], numberBag[2], numberBag[3], numberBag[4], numberBag[5], numberBag[6], numberBag[7], numberBag[8]));
-    // number_bag_shuffle();
     TraceLog(LOG_INFO, TextFormat("%d %d %d %d %d %d %d %d %d", numberBag[0], numberBag[1], numberBag[2], numberBag[3], numberBag[4], numberBag[5], numberBag[6], numberBag[7], numberBag[8]));
 
     isGameInit = false;
   }
+
   // TODO: remove
   if (IsKeyReleased(KEY_S)) {
     for (int row = 0; row < GRID_SIZE; row++) {
@@ -107,6 +119,7 @@ void game_update(void) {
       }
     }
   }
+
   // TODO: remove
   if (IsKeyReleased(KEY_T)) {
     grid_vertical_flip();
@@ -114,6 +127,10 @@ void game_update(void) {
 
   // select cell
   if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+    // set isSquareSelected to false so that clicking outside the grid to deselect works
+    isSquareSelected = false;
+
+    // calculate which square was hit (if any)
     Vector2 offset;
     offset.x = (screenWidth / 2) - (GRID_SIZE * SQUARE_SIZE / 2);
     offset.y = (screenHeight / 2) - ((GRID_SIZE - 1) * SQUARE_SIZE / 2) + (SQUARE_SIZE * 2);
@@ -125,15 +142,45 @@ void game_update(void) {
       offset.x = offsetControl;
       for (int col = 0; col < GRID_SIZE; col++) {
         if (CheckCollisionPointRec(mousePos, (Rectangle){offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE})) {
-          grid[row][col].isClicked = !grid[row][col].isClicked;
+          // clicking a cell again deselects it
+          if (selectedRow == row && selectedCol == col) {
+            isSquareSelected = false;
+            selectedRow = 10;
+            selectedCol = 10;
+          }
+          else {
+            isSquareSelected = true;
+            selectedRow = row;
+            selectedCol = col;
+          }
         }
-        else {
-          grid[row][col].isClicked = false;
-        }
-
         offset.x += SQUARE_SIZE;
       }
       offset.y += SQUARE_SIZE;
+    }
+  }
+
+  // number input
+  int keyPressed = GetKeyPressed();
+
+  if (keyPressed >= KEY_ONE && keyPressed <= KEY_NINE) {
+    if (isSquareSelected && !grid[selectedRow][selectedCol].isPregenerated && !grid[selectedRow][selectedCol].isHint) {
+      // set number
+      grid[selectedRow][selectedCol].number = keyPressed - KEY_ONE + 1;
+
+      // check if it's wrong
+      if (grid[selectedRow][selectedCol].number != gridSolved[selectedRow][selectedCol].number) {
+        grid[selectedRow][selectedCol].isWrong = true;
+        mistakeCount += 1;
+      }
+      else {
+        grid[selectedRow][selectedCol].isWrong = false;
+      }
+
+      // deselect square
+      isSquareSelected = false;
+      selectedRow = 10;
+      selectedCol = 10;
     }
   }
 
@@ -143,6 +190,10 @@ void game_update(void) {
 void game_draw(void) {
   BeginDrawing();
     ClearBackground(RAYWHITE);
+
+    // Draw UI
+    DrawRectangleLinesEx((Rectangle){(screenWidth / 2) - (GRID_SIZE * SQUARE_SIZE / 2), (screenHeight / 2) - SQUARE_SIZE * 4 - 50, SQUARE_SIZE * GRID_SIZE, SQUARE_SIZE * 1.5}, 2, GRAY);
+    GuiLabel((Rectangle){(screenWidth / 2) - (GRID_SIZE * SQUARE_SIZE / 2), (screenHeight / 2) - SQUARE_SIZE * 4 - 50, SQUARE_SIZE * GRID_SIZE, SQUARE_SIZE * 1.5}, GuiIconText(ICON_CLOCK, "15:00"));
 
     // Draw gameplay area
     Vector2 offset;
@@ -156,19 +207,29 @@ void game_draw(void) {
     for (int row = 0; row < GRID_SIZE; row++) {
       offset.x = offsetControl.x;
       for (int col = 0; col < GRID_SIZE; col++) {
-        // whether cell is selected
-        if (grid[row][col].isClicked) {
-          DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, (Color){200, 200, 225, 255});
+        // if we have selected a number
+        if (isSquareSelected) {
+          // highlight squares with the same number
+          if (grid[row][col].number == grid[selectedRow][selectedCol].number && grid[selectedRow][selectedCol].number != 0) {
+            DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, (Color){200, 200, 225, 255});
+          }
+          // highlight selected square
+          if (row == selectedRow && col == selectedCol) {
+            DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, (Color){150, 150, 200, 255});
+          }
         }
 
         // text color
         Color textColor;
 
-        if (grid[row][col].isHint) {
+        if (grid[row][col].isPregenerated) {
+          textColor = BLACK;
+        }
+        else if (grid[row][col].isWrong) {
           textColor = MAROON;
         }
-        else if (grid[row][col].isPregenerated) {
-          textColor = BLACK;
+        else if (grid[row][col].isHint) {
+          textColor = DARKGREEN;
         }
         else {
           textColor = DARKBLUE;
@@ -191,22 +252,22 @@ void game_draw(void) {
     DrawLineEx(
       (Vector2){offsetControl.x + (3 * SQUARE_SIZE), offsetControl.y},
       (Vector2){offsetControl.x + (3 * SQUARE_SIZE), offsetControl.y + (9 * SQUARE_SIZE)},
-      3, BLACK
+      3, DARKGRAY
     );
     DrawLineEx(
       (Vector2){offsetControl.x + (6 * SQUARE_SIZE), offsetControl.y},
       (Vector2){offsetControl.x + (6 * SQUARE_SIZE), offsetControl.y + (9 * SQUARE_SIZE)},
-      3, BLACK
+      3, DARKGRAY
     );
     DrawLineEx(
       (Vector2){offsetControl.x, offsetControl.y + (3 * SQUARE_SIZE)},
       (Vector2){offsetControl.x + (9 * SQUARE_SIZE), offsetControl.y + (3 * SQUARE_SIZE)},
-      3, BLACK
+      3, DARKGRAY
     );
     DrawLineEx(
       (Vector2){offsetControl.x, offsetControl.y + (6 * SQUARE_SIZE)},
       (Vector2){offsetControl.x + (9 * SQUARE_SIZE), offsetControl.y + (6 * SQUARE_SIZE)},
-      3, BLACK
+      3, DARKGRAY
     );
 
   EndDrawing();
@@ -215,14 +276,12 @@ void game_draw(void) {
 void grid_clear(void) {
   for (int row = 0; row < GRID_SIZE; row++) {
     for (int col = 0; col < GRID_SIZE; col++) {
-      grid[row][col].isPregenerated = true;
+      grid[row][col].isPregenerated = false;
       grid[row][col].isHint = false;
-      grid[row][col].isClicked = false;
       grid[row][col].number = 0;
 
       gridSolved[row][col].isPregenerated = true;
       gridSolved[row][col].isHint = true;
-      gridSolved[row][col].isClicked = false;
       gridSolved[row][col].number = 0;
     }
   }
@@ -436,6 +495,16 @@ void grid_vertical_flip(void) {
     for (int col = 0; col < GRID_SIZE; col++) {
       grid[row][col].number = aux[row][col];
       gridSolved[row][col].number = auxSolved[row][col];
+    }
+  }
+}
+
+void grid_mark_pregenerated(void) {
+  for (int row = 0; row < GRID_SIZE; row++) {
+    for (int col = 0; col < GRID_SIZE; col++) {
+      if (grid[row][col].number != 0) {
+        grid[row][col].isPregenerated = true;
+      }
     }
   }
 }
