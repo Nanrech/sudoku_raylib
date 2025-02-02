@@ -1,14 +1,13 @@
+#include <stdlib.h>
 #include "raylib.h"
 
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
-#include <stdlib.h>
-
 #define GRID_SIZE 9
+#define MAX_MISTAKES_ALLOWED 3
 #define SEED_LEN 81
 #define SEED_AMOUNT 5
-
 #define SQUARE_SIZE 40
 #define SQUARE_FONT_SIZE (SQUARE_SIZE - (SQUARE_SIZE / 4))
 
@@ -26,10 +25,12 @@ const int screenWidth = 1600;
 const int screenHeight = 900;
 
 static bool isGameInit = false;
+static bool isGameWon = false;
+static bool isGameLost = false;
 
 static int mistakeCount = 0;
 
-static bool isSquareSelected = false;
+static bool isAnySquareSelected = false;
 static int selectedRow = 0;
 static int selectedCol = 0;
 
@@ -89,7 +90,10 @@ int main(void) {
 }
 
 void game_start(void) {
-  isSquareSelected = false;
+  isGameWon = false;
+  isGameLost = false;
+
+  isAnySquareSelected = false;
   mistakeCount = 0;
 
   grid_clear();
@@ -101,12 +105,20 @@ void game_start(void) {
 void game_update(void) {
   // get mouse position
   Vector2 mousePos = GetMousePosition();
+  // get keyboard input
+  int keyPressed = GetKeyPressed();
 
   // restart
   if (IsKeyReleased(KEY_R)) {
     TraceLog(LOG_INFO, TextFormat("%d %d %d %d %d %d %d %d %d", numberBag[0], numberBag[1], numberBag[2], numberBag[3], numberBag[4], numberBag[5], numberBag[6], numberBag[7], numberBag[8]));
 
     isGameInit = false;
+  }
+
+  // if the game is over (either win or lose)
+  // reject any grid input
+  if (isGameWon || isGameLost) {
+    return;
   }
 
   // TODO: remove
@@ -127,8 +139,8 @@ void game_update(void) {
 
   // select cell
   if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-    // set isSquareSelected to false so that clicking outside the grid to deselect works
-    isSquareSelected = false;
+    // set isAnySquareSelected to false so that clicking outside the grid to deselect works
+    isAnySquareSelected = false;
 
     // calculate which square was hit (if any)
     Vector2 offset;
@@ -144,12 +156,12 @@ void game_update(void) {
         if (CheckCollisionPointRec(mousePos, (Rectangle){offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE})) {
           // clicking a cell again deselects it
           if (selectedRow == row && selectedCol == col) {
-            isSquareSelected = false;
+            isAnySquareSelected = false;
             selectedRow = 10;
             selectedCol = 10;
           }
           else {
-            isSquareSelected = true;
+            isAnySquareSelected = true;
             selectedRow = row;
             selectedCol = col;
           }
@@ -161,10 +173,8 @@ void game_update(void) {
   }
 
   // number input
-  int keyPressed = GetKeyPressed();
-
   if (keyPressed >= KEY_ONE && keyPressed <= KEY_NINE) {
-    if (isSquareSelected && !grid[selectedRow][selectedCol].isPregenerated && !grid[selectedRow][selectedCol].isHint) {
+    if (isAnySquareSelected && !grid[selectedRow][selectedCol].isPregenerated && !grid[selectedRow][selectedCol].isHint) {
       // set number
       grid[selectedRow][selectedCol].number = keyPressed - KEY_ONE + 1;
 
@@ -178,13 +188,23 @@ void game_update(void) {
       }
 
       // deselect square
-      isSquareSelected = false;
+      isAnySquareSelected = false;
       selectedRow = 10;
       selectedCol = 10;
     }
   }
 
-  return;
+  // check lose condition
+  if (mistakeCount >= MAX_MISTAKES_ALLOWED) {
+    isGameLost = true;
+    DrawCircle(0, 0, 1000, RED);
+  }
+
+  // check win condition
+  if (grid_is_solved()) {
+    isGameWon = true;
+    DrawCircle(0, 0, 1000, GREEN);
+  }
 }
 
 void game_draw(void) {
@@ -208,7 +228,7 @@ void game_draw(void) {
       offset.x = offsetControl.x;
       for (int col = 0; col < GRID_SIZE; col++) {
         // if we have selected a number
-        if (isSquareSelected) {
+        if (isAnySquareSelected) {
           // highlight squares with the same number
           if (grid[row][col].number == grid[selectedRow][selectedCol].number && grid[selectedRow][selectedCol].number != 0) {
             DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, (Color){200, 200, 225, 255});
@@ -288,7 +308,7 @@ void grid_clear(void) {
 bool grid_is_solved(void) {
   for (int row = 0; row < GRID_SIZE; row++) {
     for (int col = 0; col < GRID_SIZE; col++) {
-      if (grid[row][col].number == 0) {
+      if (grid[row][col].number != gridSolved[row][col]) {
         return false;
       }
     }
