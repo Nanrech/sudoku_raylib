@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include "raylib.h"
 
 #define RAYGUI_IMPLEMENTATION
@@ -278,7 +277,10 @@ void game_draw(void) {
         }
 
         // draw surrounding square
-        DrawRectangleLines(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, GRAY);
+        DrawLine(offset.x, offset.y, offset.x + SQUARE_SIZE, offset.y, GRAY);
+        DrawLine(offset.x, offset.y, offset.x, offset.y + SQUARE_SIZE, GRAY);
+        DrawLine(offset.x + SQUARE_SIZE, offset.y, offset.x + SQUARE_SIZE, offset.y + SQUARE_SIZE, GRAY);
+        DrawLine(offset.x, offset.y + SQUARE_SIZE, offset.x + SQUARE_SIZE, offset.y + SQUARE_SIZE, GRAY);
 
         offset.x += SQUARE_SIZE;
       }
