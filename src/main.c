@@ -36,7 +36,7 @@ static int selectedCol = 0;
 
 static GridSquare_t grid[GRID_SIZE][GRID_SIZE];
 static int gridSolved[GRID_SIZE][GRID_SIZE];
-static char* gridData;
+static char seedData[810] = "g.ca..fi.ida.f........ch.a.dgf....bhb..f.i..da......e.hi..d..f.c.g.ife...b..ea...ghcabdfieidagfebhcefbichdagdgfeacibhbehfgiacdacidhbgefhiebdgcfacaghifedbfbdceahgi..b.ci.h......eg..a..hg..b..a.g.b..d....hc..afhi.dacg..bg.a....hdf.e..a....cf..d.gfbdciahedihabegcfacehgfdbieacgibhfdbgdfhceiafhiedacgbcbgiadfehhdfbegiacieacfhbdg.g.da...f...e...c.ef.h..ba..c...da..b.e....dcf..ich.bgd....g..ec.f..i...ib..def..hgcdabiefadbeifgchefihgcbadgchbedafibiegfahdcfadichebgdhafbgciecefahidgbibgcdefhaf..bi..c..c.a.h..b..becf..h..cgb.ae.a....d...g....a.idif.hgb..cc......b..eg......fahbigdceeciadhfgbdgbecfiahhdcgbiaefaifcedbhggbefhacidifahgbedcchdifegbabegdachfi.fd..b...b.ced...ig.....f..d....h.f...hi....a.i.f..hebic.d....he...a.d..ad....egchfdgibacebacedfghigeichafbddbeachifgfghibecdaciafgdhebicfdegbahehgbacdifadbhfiegc";
 static int numberBag[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 // function declarations
@@ -60,11 +60,6 @@ void number_bag_shuffle(void);
 // entry point
 int main(void) {
   srand(0);
-  // 81 x 2 x 5
-  // TODO: Somehow embed seeds into the code
-  gridData = (char*)MemAlloc(((SEED_LEN * 2 * SEED_AMOUNT) + 1) * sizeof(char));
-  gridData = LoadFileText("seeds.txt");
-  UnloadFileText("seeds.txt");
 
   InitWindow(screenWidth, screenHeight, "Shudoku");
   SetTargetFPS(60);
@@ -122,6 +117,20 @@ void game_update(void) {
   }
 
   // TODO: remove
+  if (IsKeyReleased(KEY_H)) {
+    if (isAnySquareSelected) {
+      grid[selectedRow][selectedCol].number = gridSolved[selectedRow][selectedCol];
+      grid[selectedRow][selectedCol].isHint = true;
+      grid[selectedRow][selectedCol].isWrong = false;
+
+      // deselect square
+      isAnySquareSelected = false;
+      selectedRow = 10;
+      selectedCol = 10;
+    }
+  }
+
+  // TODO: remove
   if (IsKeyReleased(KEY_S)) {
     for (int row = 0; row < GRID_SIZE; row++) {
       for (int col = 0; col < GRID_SIZE; col++) {
@@ -172,7 +181,7 @@ void game_update(void) {
     }
   }
 
-  // number input
+  // insert number
   if (keyPressed >= KEY_ONE && keyPressed <= KEY_NINE) {
     if (isAnySquareSelected && !grid[selectedRow][selectedCol].isPregenerated && !grid[selectedRow][selectedCol].isHint) {
       // set number
@@ -229,13 +238,21 @@ void game_draw(void) {
       for (int col = 0; col < GRID_SIZE; col++) {
         // if we have selected a number
         if (isAnySquareSelected) {
-          // highlight squares with the same number
-          if (grid[row][col].number == grid[selectedRow][selectedCol].number && grid[selectedRow][selectedCol].number != 0) {
-            DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, (Color){200, 200, 225, 255});
-          }
           // highlight selected square
           if (row == selectedRow && col == selectedCol) {
             DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, (Color){150, 150, 200, 255});
+          }
+
+          // if selected square is 0, highlight relevant squares
+          else if (grid[selectedRow][selectedCol].number == 0) {
+            if (row == selectedRow || col == selectedCol) {
+              DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, (Color){213, 213, 242, 255});
+            }
+          }
+
+          // highlight squares with the same (non 0) number
+          else if (grid[row][col].number == grid[selectedRow][selectedCol].number && grid[selectedRow][selectedCol].number != 0) {
+            DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, (Color){213, 213, 242, 255});
           }
         }
 
@@ -298,6 +315,7 @@ void grid_clear(void) {
     for (int col = 0; col < GRID_SIZE; col++) {
       grid[row][col].isPregenerated = false;
       grid[row][col].isHint = false;
+      grid[row][col].isWrong = false;
       grid[row][col].number = 0;
     }
   }
@@ -362,7 +380,7 @@ void grid_load_random_seed(void) {
   for (int row = 0; row < GRID_SIZE; row++) {
     for (int col = 0; col < GRID_SIZE; col++) {
       // fetch seed number
-      char seedChar = gridData[seedStart + row * GRID_SIZE + col];
+      char seedChar = seedData[seedStart + row * GRID_SIZE + col];
       int seedNumber;
 
       if (seedChar == '.') {
@@ -375,7 +393,7 @@ void grid_load_random_seed(void) {
       grid[row][col].number = seedNumber;
 
       // fetch solution number
-      char solutionChar = gridData[solutionStart + row * GRID_SIZE + col];
+      char solutionChar = seedData[solutionStart + row * GRID_SIZE + col];
       int solutionNumber = numberBag[(int)(solutionChar - 'a')];
 
       gridSolved[row][col] = solutionNumber;
