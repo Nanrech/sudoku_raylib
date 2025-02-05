@@ -182,36 +182,41 @@ void game_update(void) {
 
   // insert number
   if (keyPressed >= KEY_ONE && keyPressed <= KEY_NINE) {
-    if (isAnySquareSelected && !grid[selectedRow][selectedCol].isPregenerated && !grid[selectedRow][selectedCol].isHint) {
-      // set number
-      grid[selectedRow][selectedCol].number = keyPressed - KEY_ONE + 1;
-
-      // check if it's wrong
-      if (grid[selectedRow][selectedCol].number != gridSolved[selectedRow][selectedCol]) {
-        grid[selectedRow][selectedCol].isWrong = true;
-        mistakeCount += 1;
-      }
-      else {
-        grid[selectedRow][selectedCol].isWrong = false;
-      }
-
-      // deselect square
-      isAnySquareSelected = false;
-      selectedRow = 10;
-      selectedCol = 10;
+    if (!isAnySquareSelected) {
+      return;
     }
+    // if number is NOT 0 and NOT wrong, return
+    if (grid[selectedRow][selectedCol].number != 0 && !grid[selectedRow][selectedCol].isWrong) {
+      return;
+    }
+
+    // set number
+    int selectedNumber = keyPressed - KEY_ONE + 1;
+    grid[selectedRow][selectedCol].number = selectedNumber;
+
+    // check if it's wrong
+    if (selectedNumber != gridSolved[selectedRow][selectedCol] || grid_is_place_valid(selectedRow, selectedCol, selectedNumber)) {
+      grid[selectedRow][selectedCol].isWrong = true;
+      mistakeCount += 1;
+    }
+    else {
+      grid[selectedRow][selectedCol].isWrong = false;
+    }
+
+    // deselect square
+    isAnySquareSelected = false;
+    selectedRow = 10;
+    selectedCol = 10;
   }
 
   // check lose condition
   if (mistakeCount >= MAX_MISTAKES_ALLOWED) {
     isGameLost = true;
-    DrawCircle(0, 0, 1000, RED);
   }
 
   // check win condition
   if (grid_is_solved()) {
     isGameWon = true;
-    DrawCircle(0, 0, 1000, GREEN);
   }
 }
 
@@ -237,20 +242,23 @@ void game_draw(void) {
       for (int col = 0; col < GRID_SIZE; col++) {
         // if we have selected a number
         if (isAnySquareSelected) {
+          int selectedNumber = grid[selectedRow][selectedCol].number;
+
           // highlight selected square
-          if (row == selectedRow && col == selectedCol) {
+          // if number == 0 OR if the current number is wrong
+          if (row == selectedRow && col == selectedCol && (grid[selectedRow][selectedCol].number == 0 || grid[selectedRow][selectedCol].isWrong)) {
             DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, (Color){150, 150, 200, 255});
           }
 
           // if selected square is 0, highlight relevant squares
-          else if (grid[selectedRow][selectedCol].number == 0) {
+          else if (selectedNumber == 0) {
             if (row == selectedRow || col == selectedCol) {
               DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, (Color){213, 213, 242, 255});
             }
           }
 
           // highlight squares with the same (non 0) number
-          else if (grid[row][col].number == grid[selectedRow][selectedCol].number && grid[selectedRow][selectedCol].number != 0) {
+          else if (grid[row][col].number == selectedNumber && selectedNumber != 0) {
             DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, (Color){213, 213, 242, 255});
           }
         }
@@ -276,7 +284,7 @@ void game_draw(void) {
           DrawText(TextFormat("%d", grid[row][col].number), offset.x + (SQUARE_SIZE / 4), offset.y + (SQUARE_SIZE / 5), SQUARE_FONT_SIZE, textColor);
         }
 
-        // draw surrounding square
+        // draw surrounding square of each cell
         DrawLine(offset.x, offset.y, offset.x + SQUARE_SIZE, offset.y, GRAY);
         DrawLine(offset.x, offset.y, offset.x, offset.y + SQUARE_SIZE, GRAY);
         DrawLine(offset.x + SQUARE_SIZE, offset.y, offset.x + SQUARE_SIZE, offset.y + SQUARE_SIZE, GRAY);
