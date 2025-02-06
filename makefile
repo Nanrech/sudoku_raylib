@@ -1,8 +1,11 @@
 # Executable name
 EXE = sudoku
 
+# Compiler
+CC = gcc
+
 # CFlags
-CFLAGS = -Iinclude -std=c99 -MMD -MP # -Wall -Wfatal-errors -Wextra -Werror
+CFLAGS = -Iinclude -std=c99 -MMD -MP -DPLATFORM_DESKTOP -Wall
 
 # Linker flags
 LDFLAGS = -Llib -lraylib -lopengl32 -lgdi32 -lwinmm
@@ -13,13 +16,16 @@ OBJ = $(patsubst src/%, obj/%, $(SRC:.c=.o))
 
 # Make targets
 $(EXE): $(OBJ)
-		gcc $^ -o $@ $(LDFLAGS)
+		$(CC) $^ -o $@ $(LDFLAGS)
 
 obj/%.o: src/%.c
-		gcc $(CFLAGS) -c $< -o $@
+		$(CC) $(CFLAGS) -c $< -o $@
 
 run: $(EXE)
 		./$(EXE)
+
+# TODO
+# web:
 
 clean:
 		@del /q obj
