@@ -7,6 +7,8 @@
 #define MAX_MISTAKES_ALLOWED 3
 #define SEED_LEN 81
 #define SEED_AMOUNT 5
+#define COLOR_HIGHLIGHT CLITERAL(Color){ 213, 213, 242, 255 }
+#define COLOR_SELECTED CLITERAL(Color){ 176, 176, 209, 255 }
 #define SQUARE_SIZE 40
 #define SQUARE_FONT_SIZE (SQUARE_SIZE - (SQUARE_SIZE / 4))
 
@@ -23,20 +25,20 @@ typedef struct GridSquare {
 const int screenWidth = 1600;
 const int screenHeight = 900;
 
-static bool isGameInit = false;
-static bool isGameWon = false;
-static bool isGameLost = false;
+bool isGameInit = false;
+bool isGameWon = false;
+bool isGameLost = false;
 
-static int mistakeCount = 0;
+int mistakeCount = 0;
 
-static bool isAnySquareSelected = false;
-static int selectedRow = 0;
-static int selectedCol = 0;
+bool isAnySquareSelected = false;
+int selectedRow = 0;
+int selectedCol = 0;
 
-static GridSquare_t grid[GRID_SIZE][GRID_SIZE];
-static int gridSolved[GRID_SIZE][GRID_SIZE];
-static char seedData[810] = "g.ca..fi.ida.f........ch.a.dgf....bhb..f.i..da......e.hi..d..f.c.g.ife...b..ea...ghcabdfieidagfebhcefbichdagdgfeacibhbehfgiacdacidhbgefhiebdgcfacaghifedbfbdceahgi..b.ci.h......eg..a..hg..b..a.g.b..d....hc..afhi.dacg..bg.a....hdf.e..a....cf..d.gfbdciahedihabegcfacehgfdbieacgibhfdbgdfhceiafhiedacgbcbgiadfehhdfbegiacieacfhbdg.g.da...f...e...c.ef.h..ba..c...da..b.e....dcf..ich.bgd....g..ec.f..i...ib..def..hgcdabiefadbeifgchefihgcbadgchbedafibiegfahdcfadichebgdhafbgciecefahidgbibgcdefhaf..bi..c..c.a.h..b..becf..h..cgb.ae.a....d...g....a.idif.hgb..cc......b..eg......fahbigdceeciadhfgbdgbecfiahhdcgbiaefaifcedbhggbefhacidifahgbedcchdifegbabegdachfi.fd..b...b.ced...ig.....f..d....h.f...hi....a.i.f..hebic.d....he...a.d..ad....egchfdgibacebacedfghigeichafbddbeachifgfghibecdaciafgdhebicfdegbahehgbacdifadbhfiegc";
-static int numberBag[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+GridSquare_t grid[GRID_SIZE][GRID_SIZE];
+int gridSolved[GRID_SIZE][GRID_SIZE];
+char seedData[SEED_AMOUNT * SEED_LEN * 2] = "g.ca..fi.ida.f........ch.a.dgf....bhb..f.i..da......e.hi..d..f.c.g.ife...b..ea...ghcabdfieidagfebhcefbichdagdgfeacibhbehfgiacdacidhbgefhiebdgcfacaghifedbfbdceahgi..b.ci.h......eg..a..hg..b..a.g.b..d....hc..afhi.dacg..bg.a....hdf.e..a....cf..d.gfbdciahedihabegcfacehgfdbieacgibhfdbgdfhceiafhiedacgbcbgiadfehhdfbegiacieacfhbdg.g.da...f...e...c.ef.h..ba..c...da..b.e....dcf..ich.bgd....g..ec.f..i...ib..def..hgcdabiefadbeifgchefihgcbadgchbedafibiegfahdcfadichebgdhafbgciecefahidgbibgcdefhaf..bi..c..c.a.h..b..becf..h..cgb.ae.a....d...g....a.idif.hgb..cc......b..eg......fahbigdceeciadhfgbdgbecfiahhdcgbiaefaifcedbhggbefhacidifahgbedcchdifegbabegdachfi.fd..b...b.ced...ig.....f..d....h.f...hi....a.i.f..hebic.d....he...a.d..ad....egchfdgibacebacedfghigeichafbddbeachifgfghibecdaciafgdhebicfdegbahehgbacdifadbhfiegc";
+int numberBag[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 // function declarations
 void game_start(void);
@@ -88,6 +90,9 @@ void game_start(void) {
   isGameLost = false;
 
   isAnySquareSelected = false;
+  selectedRow = 10;
+  selectedRow = 10;
+
   mistakeCount = 0;
 
   grid_clear();
@@ -247,19 +252,19 @@ void game_draw(void) {
           // highlight selected square
           // if number == 0 OR if the current number is wrong
           if (row == selectedRow && col == selectedCol && (grid[selectedRow][selectedCol].number == 0 || grid[selectedRow][selectedCol].isWrong)) {
-            DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, (Color){150, 150, 200, 255});
+            DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, COLOR_SELECTED);
           }
 
           // if selected square is 0, highlight relevant squares
           else if (selectedNumber == 0) {
             if (row == selectedRow || col == selectedCol) {
-              DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, (Color){213, 213, 242, 255});
+              DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, COLOR_HIGHLIGHT);
             }
           }
 
           // highlight squares with the same (non 0) number
           else if (grid[row][col].number == selectedNumber && selectedNumber != 0) {
-            DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, (Color){213, 213, 242, 255});
+            DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, COLOR_HIGHLIGHT);
           }
         }
 
