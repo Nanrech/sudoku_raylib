@@ -5,7 +5,7 @@ EXE = sudoku
 CC = gcc
 
 # CFlags
-CFLAGS = -Iinclude -std=c99 -MMD -MP -DPLATFORM_DESKTOP -Wall
+CFLAGS = -Iinclude -std=c99 -MMD -MP -Wall -DPLATFORM_DESKTOP
 
 # Linker flags
 LDFLAGS = -Llib -lraylib -lopengl32 -lgdi32 -lwinmm
