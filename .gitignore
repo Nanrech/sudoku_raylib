@@ -1,3 +1,6 @@
+.gitignore
+.gitattributes
+
 include/raylib.h
 include/raygui.h
 obj
