@@ -4,6 +4,9 @@
 #include "constants.h"
 #include "game_state.h"
 
+extern int numberBag[9];
+void number_bag_shuffle(void);
+
 void grid_clear(void);
 bool grid_is_solved(void);
 bool grid_is_place_valid(int row, int col, int n);
