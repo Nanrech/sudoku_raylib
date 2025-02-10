@@ -11,21 +11,23 @@ typedef struct GridSquare {
 } GridSquare_t;
 
 typedef struct {
+  // Game state
   bool isGameInit;
   bool isGameWon;
   bool isGameLost;
-
   int mistakeCount;
 
+  // Input state
   bool isAnySquareSelected;
   int selectedRow;
   int selectedCol;
-
-  GridSquare_t grid[GRID_SIZE][GRID_SIZE];
-  int gridSolved[GRID_SIZE][GRID_SIZE];
 } GameState_t;
 
-// Declare a global game state
+// Global grid(s)
+extern GridSquare_t grid[GRID_SIZE][GRID_SIZE];
+extern int gridSolved[GRID_SIZE][GRID_SIZE];
+
+// Global game state
 extern GameState_t gameState;
 
 void game_start(void);

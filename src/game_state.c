@@ -2,18 +2,22 @@
 #include "grid.h"
 
 
+// Global variables
+GridSquare_t grid[GRID_SIZE][GRID_SIZE];
+int gridSolved[GRID_SIZE][GRID_SIZE] = {0};
+
+// Global state
 GameState_t gameState;
 
 void game_start(void) {
   gameState.isGameInit = true;
   gameState.isGameWon = false;
   gameState.isGameLost = false;
+  gameState.mistakeCount = 0;
 
   gameState.isAnySquareSelected = false;
   gameState.selectedRow = -1;
   gameState.selectedCol = -1;
-
-  gameState.mistakeCount = 0;
 
   grid_clear();
   grid_load_random_seed();
@@ -44,14 +48,14 @@ void game_update(void) {
   // TODO: remove
   if (IsKeyReleased(KEY_H)) {
     if (gameState.isAnySquareSelected) {
-      gameState.grid[gameState.selectedRow][gameState.selectedCol].number = gameState.gridSolved[gameState.selectedRow][gameState.selectedCol];
-      gameState.grid[gameState.selectedRow][gameState.selectedCol].isHint = true;
-      gameState.grid[gameState.selectedRow][gameState.selectedCol].isWrong = false;
+      grid[gameState.selectedRow][gameState.selectedCol].number = gridSolved[gameState.selectedRow][gameState.selectedCol];
+      grid[gameState.selectedRow][gameState.selectedCol].isHint = true;
+      grid[gameState.selectedRow][gameState.selectedCol].isWrong = false;
 
       // deselect square
       gameState.isAnySquareSelected = false;
-      gameState.selectedRow = 10;
-      gameState.selectedCol = 10;
+      gameState.selectedRow = -1;
+      gameState.selectedCol = -1;
     }
   }
 
@@ -59,9 +63,9 @@ void game_update(void) {
   if (IsKeyReleased(KEY_S)) {
     for (int row = 0; row < GRID_SIZE; row++) {
       for (int col = 0; col < GRID_SIZE; col++) {
-      int temp = gameState.grid[row][col].number;
-      gameState.grid[row][col].number = gameState.gridSolved[row][col];
-      gameState.gridSolved[row][col] = temp;
+      int temp = grid[row][col].number;
+      grid[row][col].number = gridSolved[row][col];
+      gridSolved[row][col] = temp;
       }
     }
   }
@@ -91,8 +95,8 @@ void game_update(void) {
           // clicking a cell again deselects it
           if (gameState.selectedRow == row && gameState.selectedCol == col) {
             gameState.isAnySquareSelected = false;
-            gameState.selectedRow = 10;
-            gameState.selectedCol = 10;
+            gameState.selectedRow = -1;
+            gameState.selectedCol = -1;
           }
           else {
             gameState.isAnySquareSelected = true;
@@ -112,27 +116,27 @@ void game_update(void) {
       return;
     }
     // if number is NOT 0 and NOT wrong, return
-    if (gameState.grid[gameState.selectedRow][gameState.selectedCol].number != 0 && !gameState.grid[gameState.selectedRow][gameState.selectedCol].isWrong) {
+    if (grid[gameState.selectedRow][gameState.selectedCol].number != 0 && !grid[gameState.selectedRow][gameState.selectedCol].isWrong) {
       return;
     }
 
     // set number
     int selectedNumber = keyPressed - KEY_ONE + 1;
-    gameState.grid[gameState.selectedRow][gameState.selectedCol].number = selectedNumber;
+    grid[gameState.selectedRow][gameState.selectedCol].number = selectedNumber;
 
     // check if it's wrong
-    if (selectedNumber != gameState.gridSolved[gameState.selectedRow][gameState.selectedCol] || grid_is_place_valid(gameState.selectedRow, gameState.selectedCol, selectedNumber)) {
-      gameState.grid[gameState.selectedRow][gameState.selectedCol].isWrong = true;
+    if (selectedNumber != gridSolved[gameState.selectedRow][gameState.selectedCol] || grid_is_place_valid(gameState.selectedRow, gameState.selectedCol, selectedNumber)) {
+      grid[gameState.selectedRow][gameState.selectedCol].isWrong = true;
       gameState.mistakeCount += 1;
     }
     else {
-      gameState.grid[gameState.selectedRow][gameState.selectedCol].isWrong = false;
+      grid[gameState.selectedRow][gameState.selectedCol].isWrong = false;
     }
 
     // deselect square
     gameState.isAnySquareSelected = false;
-    gameState.selectedRow = 10;
-    gameState.selectedCol = 10;
+    gameState.selectedRow = -1;
+    gameState.selectedCol = -1;
   }
 
   // check lose condition
@@ -167,11 +171,11 @@ void game_draw(void) {
     for (int col = 0; col < GRID_SIZE; col++) {
       // if we have selected a number
       if (gameState.isAnySquareSelected) {
-        int selectedNumber = gameState.grid[gameState.selectedRow][gameState.selectedCol].number;
+        int selectedNumber = grid[gameState.selectedRow][gameState.selectedCol].number;
 
         // highlight selected square
         // if number == 0 OR if the current number is wrong
-        if (row == gameState.selectedRow && col == gameState.selectedCol && (gameState.grid[gameState.selectedRow][gameState.selectedCol].number == 0 || gameState.grid[gameState.selectedRow][gameState.selectedCol].isWrong)) {
+        if (row == gameState.selectedRow && col == gameState.selectedCol && (grid[gameState.selectedRow][gameState.selectedCol].number == 0 || grid[gameState.selectedRow][gameState.selectedCol].isWrong)) {
           DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, COLOR_SELECTED);
         }
 
@@ -183,7 +187,7 @@ void game_draw(void) {
         }
 
         // highlight squares with the same (non 0) number
-        else if (gameState.grid[row][col].number == selectedNumber && selectedNumber != 0) {
+        else if (grid[row][col].number == selectedNumber && selectedNumber != 0) {
           DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, COLOR_HIGHLIGHT);
         }
       }
@@ -191,13 +195,13 @@ void game_draw(void) {
       // text color
       Color textColor;
 
-      if (gameState.grid[row][col].isPregenerated) {
+      if (grid[row][col].isPregenerated) {
         textColor = BLACK;
       }
-      else if (gameState.grid[row][col].isWrong) {
+      else if (grid[row][col].isWrong) {
         textColor = MAROON;
       }
-      else if (gameState.grid[row][col].isHint) {
+      else if (grid[row][col].isHint) {
         textColor = DARKGREEN;
       }
       else {
@@ -205,8 +209,8 @@ void game_draw(void) {
       }
 
       // draw text, 0 means empty
-      if (gameState.grid[row][col].number != 0) {
-        DrawText(TextFormat("%d", gameState.grid[row][col].number), offset.x + (SQUARE_SIZE / 4), offset.y + (SQUARE_SIZE / 5), SQUARE_FONT_SIZE, textColor);
+      if (grid[row][col].number != 0) {
+        DrawText(TextFormat("%d", grid[row][col].number), offset.x + (SQUARE_SIZE / 4), offset.y + (SQUARE_SIZE / 5), SQUARE_FONT_SIZE, textColor);
       }
 
       // draw surrounding square of each cell

@@ -18,10 +18,10 @@ void number_bag_shuffle(void) {
 void grid_clear(void) {
   for (int row = 0; row < GRID_SIZE; row++) {
     for (int col = 0; col < GRID_SIZE; col++) {
-      gameState.grid[row][col].isPregenerated = false;
-      gameState.grid[row][col].isHint = false;
-      gameState.grid[row][col].isWrong = false;
-      gameState.grid[row][col].number = 0;
+      grid[row][col].isPregenerated = false;
+      grid[row][col].isHint = false;
+      grid[row][col].isWrong = false;
+      grid[row][col].number = 0;
     }
   }
 
@@ -31,7 +31,7 @@ void grid_clear(void) {
 bool grid_is_solved(void) {
   for (int row = 0; row < GRID_SIZE; row++) {
     for (int col = 0; col < GRID_SIZE; col++) {
-      if (gameState.grid[row][col].number != gameState.gridSolved[row][col]) {
+      if (grid[row][col].number != gridSolved[row][col]) {
         return false;
       }
     }
@@ -43,14 +43,14 @@ bool grid_is_solved(void) {
 bool grid_is_place_valid(int row, int col, int n) {
   // check if n is already in row
   for (int i = 0; i < GRID_SIZE; i++) {
-    if (gameState.grid[row][i].number == n) {
+    if (grid[row][i].number == n) {
       return false;
     }
   }
 
   // check if n is already in column
   for (int i = 0; i < GRID_SIZE; i++) {
-    if (gameState.grid[i][col].number == n) {
+    if (grid[i][col].number == n) {
       return false;
     }
   }
@@ -61,7 +61,7 @@ bool grid_is_place_valid(int row, int col, int n) {
 
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < 3; j++) {
-      if (gameState.grid[startRow + i][startCol + j].number == n) {
+      if (grid[startRow + i][startCol + j].number == n) {
         return false;
       }
     }
@@ -95,13 +95,13 @@ void grid_load_random_seed(void) {
         seedNumber = numberBag[(int)(seedChar - 'a')];
       }
 
-      gameState.grid[row][col].number = seedNumber;
+      grid[row][col].number = seedNumber;
 
       // fetch solution number
       char solutionChar = seedData[solutionStart + row * GRID_SIZE + col];
       int solutionNumber = numberBag[(int)(solutionChar - 'a')];
 
-      gameState.gridSolved[row][col] = solutionNumber;
+      gridSolved[row][col] = solutionNumber;
     }
   }
 }
@@ -162,14 +162,14 @@ void grid_rotate_90(void) {
   for (int row = 0; row < GRID_SIZE; row++) {
     for (int col = row + 1; col < GRID_SIZE; col++) {
       // swap
-      int temp = gameState.grid[row][col].number;
-      gameState.grid[row][col].number = gameState.grid[col][row].number;
-      gameState.grid[col][row].number = temp;
+      int temp = grid[row][col].number;
+      grid[row][col].number = grid[col][row].number;
+      grid[col][row].number = temp;
 
       // do the same to the solution
-      temp = gameState.gridSolved[row][col];
-      gameState.gridSolved[row][col] = gameState.gridSolved[col][row];
-      gameState.gridSolved[col][row] = temp;
+      temp = gridSolved[row][col];
+      gridSolved[row][col] = gridSolved[col][row];
+      gridSolved[col][row] = temp;
     }
   }
 
@@ -177,14 +177,14 @@ void grid_rotate_90(void) {
   for (int row = 0; row < GRID_SIZE; row++) {
     for (int col = 0; col < (GRID_SIZE / 2); col++) {
       // swap
-      int temp = gameState.grid[row][col].number;
-      gameState.grid[row][col].number = gameState.grid[row][GRID_SIZE - col - 1].number;
-      gameState.grid[row][GRID_SIZE - col - 1].number = temp;
+      int temp = grid[row][col].number;
+      grid[row][col].number = grid[row][GRID_SIZE - col - 1].number;
+      grid[row][GRID_SIZE - col - 1].number = temp;
 
       // do the same to the solution
-      temp = gameState.gridSolved[row][col];
-      gameState.gridSolved[row][col] = gameState.gridSolved[row][GRID_SIZE - col - 1];
-      gameState.gridSolved[row][GRID_SIZE - col - 1] = temp;
+      temp = gridSolved[row][col];
+      gridSolved[row][col] = gridSolved[row][GRID_SIZE - col - 1];
+      gridSolved[row][GRID_SIZE - col - 1] = temp;
     }
   }
 }
@@ -198,22 +198,22 @@ void grid_horizontal_flip(void) {
 
   for (int col = 0; col < (GRID_SIZE / 2); col++) {
     for (int row = 0; row < GRID_SIZE; row++) {
-      aux[row][GRID_SIZE - 1 - col] = gameState.grid[row][col].number;
-      auxSolved[row][GRID_SIZE - 1 - col] = gameState.gridSolved[row][col];
+      aux[row][GRID_SIZE - 1 - col] = grid[row][col].number;
+      auxSolved[row][GRID_SIZE - 1 - col] = gridSolved[row][col];
     }
   }
 
   for (int col = (GRID_SIZE / 2); col < GRID_SIZE; col++) {
     for (int row = 0; row < GRID_SIZE; row++) {
-      aux[row][GRID_SIZE - 1 - col] = gameState.grid[row][col].number;
-      auxSolved[row][GRID_SIZE - 1 - col] = gameState.gridSolved[row][col];
+      aux[row][GRID_SIZE - 1 - col] = grid[row][col].number;
+      auxSolved[row][GRID_SIZE - 1 - col] = gridSolved[row][col];
     }
   }
 
   for (int row = 0; row < GRID_SIZE; row++) {
     for (int col = 0; col < GRID_SIZE; col++) {
-      gameState.grid[row][col].number = aux[row][col];
-      gameState.gridSolved[row][col] = auxSolved[row][col];
+      grid[row][col].number = aux[row][col];
+      gridSolved[row][col] = auxSolved[row][col];
     }
   }
 }
@@ -224,22 +224,22 @@ void grid_vertical_flip(void) {
 
   for (int row = 0; row < (GRID_SIZE / 2); row++) {
     for (int col = 0; col < GRID_SIZE; col++) {
-      aux[GRID_SIZE - 1 - row][col] = gameState.grid[row][col].number;
-      auxSolved[GRID_SIZE - 1 - row][col] = gameState.gridSolved[row][col];
+      aux[GRID_SIZE - 1 - row][col] = grid[row][col].number;
+      auxSolved[GRID_SIZE - 1 - row][col] = gridSolved[row][col];
     }
   }
 
   for (int row = (GRID_SIZE / 2); row < GRID_SIZE; row++) {
     for (int col = 0; col < GRID_SIZE; col++) {
-      aux[GRID_SIZE - 1 - row][col] = gameState.grid[row][col].number;
-      auxSolved[GRID_SIZE - 1 - row][col] = gameState.gridSolved[row][col];
+      aux[GRID_SIZE - 1 - row][col] = grid[row][col].number;
+      auxSolved[GRID_SIZE - 1 - row][col] = gridSolved[row][col];
     }
   }
 
   for (int row = 0; row < GRID_SIZE; row++) {
     for (int col = 0; col < GRID_SIZE; col++) {
-      gameState.grid[row][col].number = aux[row][col];
-      gameState.gridSolved[row][col] = auxSolved[row][col];
+      grid[row][col].number = aux[row][col];
+      gridSolved[row][col] = auxSolved[row][col];
     }
   }
 }
@@ -247,8 +247,8 @@ void grid_vertical_flip(void) {
 void grid_mark_pregenerated(void) {
   for (int row = 0; row < GRID_SIZE; row++) {
     for (int col = 0; col < GRID_SIZE; col++) {
-      if (gameState.grid[row][col].number != 0) {
-        gameState.grid[row][col].isPregenerated = true;
+      if (grid[row][col].number != 0) {
+        grid[row][col].isPregenerated = true;
       }
     }
   }
