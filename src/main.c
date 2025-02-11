@@ -1,6 +1,6 @@
 #include "raylib.h"
 #include "game_state.h"
-#include "constants.h"
+#include "common.h"
 
 
 int screenWidth;

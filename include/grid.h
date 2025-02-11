@@ -1,7 +1,7 @@
 #ifndef GRID_H
 #define GRID_H
 
-#include "constants.h"
+#include "common.h"
 #include "game_state.h"
 
 extern int numberBag[9];

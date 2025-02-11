@@ -1,7 +1,7 @@
 #ifndef SEED_H
 #define SEED_H
 
-#include "constants.h"
+#include "common.h"
 
 // I don't like the way this looks
 const char seedData[SEED_AMOUNT * SEED_LEN * 2 + 1] = "g.ca..fi.ida.f........ch.a.dgf....bhb..f.i..da......e.hi..d..f.c.g.ife...b..ea..."
