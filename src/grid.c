@@ -1,6 +1,6 @@
 #include "grid.h"
-#include "game_state.h"
 #include "seed.h"
+
 
 int numberBag[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 

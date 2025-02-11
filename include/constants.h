@@ -13,8 +13,7 @@
 #define SQUARE_SIZE 40
 #define SQUARE_FONT_SIZE (SQUARE_SIZE - (SQUARE_SIZE / 4))
 
-// TODO: Don't do this
-#define screenWidth 1920
-#define screenHeight 1080
+extern int screenWidth;
+extern int screenHeight;
 
 #endif // CONSTANTS_H
