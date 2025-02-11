@@ -1,5 +1,6 @@
 include/raylib.h
 include/raygui.h
+.vscode
 obj
 lib
 notes
