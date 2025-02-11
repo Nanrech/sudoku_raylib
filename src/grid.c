@@ -106,8 +106,6 @@ void grid_load_random_seed(void) {
 
 void grid_randomly_mutate(void) {
   /*
-    - shuffle each block's rows (same rotations for each block)
-    - shuffle each block's cols (same rotations for each block)
     - rotate the whole thing by 90 / 180 / 270 degrees
     - flip horizontally
     - flip vertically
