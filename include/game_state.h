@@ -34,5 +34,7 @@ void game_start(void);
 void game_update(void);
 void game_draw(void);
 void game_reset(void);
+void game_select(int row, int col);
+void game_deselect(void);
 
 #endif // GAME_STATE_H

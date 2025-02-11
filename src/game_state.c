@@ -15,9 +15,7 @@ void game_start(void) {
   gameState.isGameLost = false;
   gameState.mistakeCount = 0;
 
-  gameState.isAnySquareSelected = false;
-  gameState.selectedRow = -1;
-  gameState.selectedCol = -1;
+  game_deselect();
 
   grid_clear();
   grid_load_random_seed();
@@ -39,8 +37,7 @@ void game_update(void) {
     game_reset();
   }
 
-  // if the game is over (either win or lose)
-  // reject any grid input
+  // if the game is over (either win or lose) reject any grid input
   if (gameState.isGameWon || gameState.isGameLost) {
     return;
   }
@@ -52,10 +49,7 @@ void game_update(void) {
       grid[gameState.selectedRow][gameState.selectedCol].isHint = true;
       grid[gameState.selectedRow][gameState.selectedCol].isWrong = false;
 
-      // deselect square
-      gameState.isAnySquareSelected = false;
-      gameState.selectedRow = -1;
-      gameState.selectedCol = -1;
+      game_deselect();
     }
   }
 
@@ -81,32 +75,28 @@ void game_update(void) {
     gameState.isAnySquareSelected = false;
 
     // calculate which square was hit (if any)
-    Vector2 offset;
-    offset.x = (screenWidth / 2) - (GRID_SIZE * SQUARE_SIZE / 2);
-    offset.y = (screenHeight / 2) - ((GRID_SIZE - 1) * SQUARE_SIZE / 2) + (SQUARE_SIZE * 2);
+    Vector2 gridOffset;
+    gridOffset.x = (screenWidth / 2) - (GRID_SIZE * SQUARE_SIZE / 2);
+    gridOffset.y = (screenHeight / 2) - ((GRID_SIZE - 1) * SQUARE_SIZE / 2) + (SQUARE_SIZE * 2);
 
-    offset.y -= 50;
-    int offsetControl = offset.x;
+    gridOffset.y -= 50;
+    int gridOffsetControl = gridOffset.x;
 
     for (int row = 0; row < GRID_SIZE; row++) {
-      offset.x = offsetControl;
+      gridOffset.x = gridOffsetControl;
       for (int col = 0; col < GRID_SIZE; col++) {
-        if (CheckCollisionPointRec(mousePos, (Rectangle){offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE})) {
+        if (CheckCollisionPointRec(mousePos, (Rectangle){gridOffset.x, gridOffset.y, SQUARE_SIZE, SQUARE_SIZE})) {
           // clicking a cell again deselects it
           if (gameState.selectedRow == row && gameState.selectedCol == col) {
-            gameState.isAnySquareSelected = false;
-            gameState.selectedRow = -1;
-            gameState.selectedCol = -1;
+            game_deselect();
           }
           else {
-            gameState.isAnySquareSelected = true;
-            gameState.selectedRow = row;
-            gameState.selectedCol = col;
+            game_select(row, col);
           }
         }
-        offset.x += SQUARE_SIZE;
+        gridOffset.x += SQUARE_SIZE;
       }
-      offset.y += SQUARE_SIZE;
+      gridOffset.y += SQUARE_SIZE;
     }
   }
 
@@ -134,9 +124,7 @@ void game_update(void) {
     }
 
     // deselect square
-    gameState.isAnySquareSelected = false;
-    gameState.selectedRow = -1;
-    gameState.selectedCol = -1;
+    game_deselect();
   }
 
   // check lose condition
@@ -155,19 +143,19 @@ void game_draw(void) {
   ClearBackground(RAYWHITE);
 
   // Draw UI
-  DrawRectangleLinesEx((Rectangle){(screenWidth / 2) - (GRID_SIZE * SQUARE_SIZE / 2), (screenHeight / 2) - SQUARE_SIZE * 4 - 50, SQUARE_SIZE * GRID_SIZE, SQUARE_SIZE * 1.5}, 2, GRAY);
+  // DrawRectangleLinesEx((Rectangle){(screenWidth / 2) - (GRID_SIZE * SQUARE_SIZE / 2), (screenHeight / 2) - SQUARE_SIZE * 4 - 50, SQUARE_SIZE * GRID_SIZE, SQUARE_SIZE * 1.5}, 2, GRAY);
 
   // Draw gameplay area
-  Vector2 offset;
-  Vector2 offsetControl;
+  Vector2 gridOffset;
+  Vector2 gridOffsetControl;
 
-  offset.x = (screenWidth / 2) - (GRID_SIZE * SQUARE_SIZE / 2);
-  offset.y = (screenHeight / 2) - ((GRID_SIZE - 1) * SQUARE_SIZE / 2) + (SQUARE_SIZE * 2) - 50;
+  gridOffset.x = (screenWidth / 2) - (GRID_SIZE * SQUARE_SIZE / 2);
+  gridOffset.y = (screenHeight / 2) - ((GRID_SIZE - 1) * SQUARE_SIZE / 2) + (SQUARE_SIZE * 2) - 50;
 
-  offsetControl = offset;
+  gridOffsetControl = gridOffset;
 
   for (int row = 0; row < GRID_SIZE; row++) {
-    offset.x = offsetControl.x;
+    gridOffset.x = gridOffsetControl.x;
     for (int col = 0; col < GRID_SIZE; col++) {
       // if we have selected a number
       if (gameState.isAnySquareSelected) {
@@ -176,19 +164,19 @@ void game_draw(void) {
         // highlight selected square
         // if number == 0 OR if the current number is wrong
         if (row == gameState.selectedRow && col == gameState.selectedCol && (grid[gameState.selectedRow][gameState.selectedCol].number == 0 || grid[gameState.selectedRow][gameState.selectedCol].isWrong)) {
-          DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, COLOR_SELECTED);
+          DrawRectangle(gridOffset.x, gridOffset.y, SQUARE_SIZE, SQUARE_SIZE, COLOR_SELECTED_2);
         }
 
         // if selected square is 0, highlight relevant squares
         else if (selectedNumber == 0) {
           if (row == gameState.selectedRow || col == gameState.selectedCol) {
-            DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, COLOR_HIGHLIGHT);
+            DrawRectangle(gridOffset.x, gridOffset.y, SQUARE_SIZE, SQUARE_SIZE, COLOR_HIGHLIGHT);
           }
         }
 
         // highlight squares with the same (non 0) number
         else if (grid[row][col].number == selectedNumber && selectedNumber != 0) {
-          DrawRectangle(offset.x, offset.y, SQUARE_SIZE, SQUARE_SIZE, COLOR_HIGHLIGHT);
+          DrawRectangle(gridOffset.x, gridOffset.y, SQUARE_SIZE, SQUARE_SIZE, COLOR_SELECTED);
         }
       }
 
@@ -210,39 +198,39 @@ void game_draw(void) {
 
       // draw text, 0 means empty
       if (grid[row][col].number != 0) {
-        DrawText(TextFormat("%d", grid[row][col].number), offset.x + (SQUARE_SIZE / 4), offset.y + (SQUARE_SIZE / 5), SQUARE_FONT_SIZE, textColor);
+        DrawText(TextFormat("%d", grid[row][col].number), gridOffset.x + (SQUARE_SIZE / 4), gridOffset.y + (SQUARE_SIZE / 5), SQUARE_FONT_SIZE, textColor);
       }
 
       // draw surrounding square of each cell
-      DrawLine(offset.x, offset.y, offset.x + SQUARE_SIZE, offset.y, GRAY);
-      DrawLine(offset.x, offset.y, offset.x, offset.y + SQUARE_SIZE, GRAY);
-      DrawLine(offset.x + SQUARE_SIZE, offset.y, offset.x + SQUARE_SIZE, offset.y + SQUARE_SIZE, GRAY);
-      DrawLine(offset.x, offset.y + SQUARE_SIZE, offset.x + SQUARE_SIZE, offset.y + SQUARE_SIZE, GRAY);
+      DrawLine(gridOffset.x, gridOffset.y, gridOffset.x + SQUARE_SIZE, gridOffset.y, GRAY);
+      DrawLine(gridOffset.x, gridOffset.y, gridOffset.x, gridOffset.y + SQUARE_SIZE, GRAY);
+      DrawLine(gridOffset.x + SQUARE_SIZE, gridOffset.y, gridOffset.x + SQUARE_SIZE, gridOffset.y + SQUARE_SIZE, GRAY);
+      DrawLine(gridOffset.x, gridOffset.y + SQUARE_SIZE, gridOffset.x + SQUARE_SIZE, gridOffset.y + SQUARE_SIZE, GRAY);
 
-      offset.x += SQUARE_SIZE;
+      gridOffset.x += SQUARE_SIZE;
     }
-    offset.y += SQUARE_SIZE;
+    gridOffset.y += SQUARE_SIZE;
   }
 
   // draw separators
   DrawLineEx(
-    (Vector2){offsetControl.x + (3 * SQUARE_SIZE), offsetControl.y},
-    (Vector2){offsetControl.x + (3 * SQUARE_SIZE), offsetControl.y + (9 * SQUARE_SIZE)},
+    (Vector2){gridOffsetControl.x + (3 * SQUARE_SIZE), gridOffsetControl.y},
+    (Vector2){gridOffsetControl.x + (3 * SQUARE_SIZE), gridOffsetControl.y + (9 * SQUARE_SIZE)},
     3, DARKGRAY
   );
   DrawLineEx(
-    (Vector2){offsetControl.x + (6 * SQUARE_SIZE), offsetControl.y},
-    (Vector2){offsetControl.x + (6 * SQUARE_SIZE), offsetControl.y + (9 * SQUARE_SIZE)},
+    (Vector2){gridOffsetControl.x + (6 * SQUARE_SIZE), gridOffsetControl.y},
+    (Vector2){gridOffsetControl.x + (6 * SQUARE_SIZE), gridOffsetControl.y + (9 * SQUARE_SIZE)},
     3, DARKGRAY
   );
   DrawLineEx(
-    (Vector2){offsetControl.x, offsetControl.y + (3 * SQUARE_SIZE)},
-    (Vector2){offsetControl.x + (9 * SQUARE_SIZE), offsetControl.y + (3 * SQUARE_SIZE)},
+    (Vector2){gridOffsetControl.x, gridOffsetControl.y + (3 * SQUARE_SIZE)},
+    (Vector2){gridOffsetControl.x + (9 * SQUARE_SIZE), gridOffsetControl.y + (3 * SQUARE_SIZE)},
     3, DARKGRAY
   );
   DrawLineEx(
-    (Vector2){offsetControl.x, offsetControl.y + (6 * SQUARE_SIZE)},
-    (Vector2){offsetControl.x + (9 * SQUARE_SIZE), offsetControl.y + (6 * SQUARE_SIZE)},
+    (Vector2){gridOffsetControl.x, gridOffsetControl.y + (6 * SQUARE_SIZE)},
+    (Vector2){gridOffsetControl.x + (9 * SQUARE_SIZE), gridOffsetControl.y + (6 * SQUARE_SIZE)},
     3, DARKGRAY
   );
 
@@ -251,4 +239,16 @@ void game_draw(void) {
 
 void game_reset(void) {
   gameState.isGameInit = false;
+}
+
+void game_select(int row, int col) {
+  gameState.isAnySquareSelected = true;
+  gameState.selectedRow = row;
+  gameState.selectedCol = col;
+}
+
+void game_deselect(void) {
+  gameState.isAnySquareSelected = false;
+  gameState.selectedRow = -1;
+  gameState.selectedCol = -1;
 }
