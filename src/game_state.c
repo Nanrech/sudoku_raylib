@@ -36,7 +36,7 @@ void game_update(void) {
   // restart
   if (IsKeyReleased(KEY_R)) {
   // TraceLog(LOG_INFO, TextFormat("%d %d %d %d %d %d %d %d %d", numberBag[0], numberBag[1], numberBag[2], numberBag[3], numberBag[4], numberBag[5], numberBag[6], numberBag[7], numberBag[8]));
-    gameState.isGameInit = false;
+    game_reset();
   }
 
   // if the game is over (either win or lose)
