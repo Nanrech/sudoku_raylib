@@ -2,7 +2,7 @@
 #define GRID_H
 
 #include "common.h"
-#include "game_state.h"
+#include "game.h"
 
 extern int numberBag[9];
 void number_bag_shuffle(void);

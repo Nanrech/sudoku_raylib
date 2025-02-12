@@ -1,4 +1,4 @@
-#include "game_state.h"
+#include "game.h"
 #include "grid.h"
 
 
@@ -169,7 +169,7 @@ void game_draw(void) {
   infoOffset.x = (screenWidth / 2) - (GRID_SIZE / 2 * SQUARE_SIZE) - SQUARE_SIZE / 2;
   infoOffset.y = (screenHeight / 2) + 50 + SQUARE_FONT_SIZE + (GRID_SIZE / 2 * SQUARE_SIZE);
 
-  DrawText("[R] to restart\n[H] to reveal one cell", infoOffset.x, infoOffset.y, SQUARE_FONT_SIZE, RED);
+  DrawText("[R] to restart\n[H] to get a hint", infoOffset.x, infoOffset.y, SQUARE_FONT_SIZE, BLACK);
 
   // Draw gameplay area
   Vector2 gridOffset;
