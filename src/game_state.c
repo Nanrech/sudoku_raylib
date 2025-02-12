@@ -13,6 +13,8 @@ void game_start(void) {
   gameState.isGameInit = true;
   gameState.isGameWon = false;
   gameState.isGameLost = false;
+  gameState.isHintUsed = false;
+
   gameState.mistakeCount = 0;
 
   game_deselect();
@@ -44,10 +46,12 @@ void game_update(void) {
 
   // TODO: remove
   if (IsKeyReleased(KEY_H)) {
-    if (gameState.isAnySquareSelected) {
+    if (gameState.isAnySquareSelected && !gameState.isHintUsed) {
       grid[gameState.selectedRow][gameState.selectedCol].number = gridSolved[gameState.selectedRow][gameState.selectedCol];
       grid[gameState.selectedRow][gameState.selectedCol].isHint = true;
       grid[gameState.selectedRow][gameState.selectedCol].isWrong = false;
+
+      gameState.isHintUsed = true;
 
       game_deselect();
     }
@@ -142,8 +146,14 @@ void game_draw(void) {
   BeginDrawing();
   ClearBackground(RAYWHITE);
 
-  // Draw UI
-  // DrawRectangleLinesEx((Rectangle){(screenWidth / 2) - (GRID_SIZE * SQUARE_SIZE / 2), (screenHeight / 2) - SQUARE_SIZE * 4 - 50, SQUARE_SIZE * GRID_SIZE, SQUARE_SIZE * 1.5}, 2, GRAY);
+  // Draw error counter
+//  Vector2 errorCounterOffset;
+//  errorCounterOffset.x = (screenWidth / 2) + ((GRID_SIZE + 1) * SQUARE_SIZE / 2);
+//  errorCounterOffset.y = (screenHeight / 2) - ((GRID_SIZE - 1) * SQUARE_SIZE / 2) + (SQUARE_SIZE * 1.25);
+
+//  DrawRectangleLinesEx((Rectangle){errorCounterOffset.x, errorCounterOffset.y + SQUARE_SIZE * 0 + SQUARE_SIZE * 0, SQUARE_SIZE * 2, SQUARE_SIZE * 2}, 4, DARKGRAY);
+//  DrawRectangleLinesEx((Rectangle){errorCounterOffset.x, errorCounterOffset.y + SQUARE_SIZE * 2 + SQUARE_SIZE * 1, SQUARE_SIZE * 2, SQUARE_SIZE * 2}, 4, DARKGRAY);
+//  DrawRectangleLinesEx((Rectangle){errorCounterOffset.x, errorCounterOffset.y + SQUARE_SIZE * 4 + SQUARE_SIZE * 2, SQUARE_SIZE * 2, SQUARE_SIZE * 2}, 4, DARKGRAY);
 
   // Draw gameplay area
   Vector2 gridOffset;
