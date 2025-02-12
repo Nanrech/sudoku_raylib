@@ -16,7 +16,7 @@ typedef struct {
   bool isGameWon;
   bool isGameLost;
   bool isHintUsed;
-  int mistakeCount;
+  int mistakesLeft;
 
   // Input state
   bool isAnySquareSelected;

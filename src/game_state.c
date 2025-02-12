@@ -15,7 +15,7 @@ void game_start(void) {
   gameState.isGameLost = false;
   gameState.isHintUsed = false;
 
-  gameState.mistakeCount = 0;
+  gameState.mistakesLeft = MAX_MISTAKES_ALLOWED;
 
   game_deselect();
 
@@ -61,9 +61,7 @@ void game_update(void) {
   if (IsKeyReleased(KEY_S)) {
     for (int row = 0; row < GRID_SIZE; row++) {
       for (int col = 0; col < GRID_SIZE; col++) {
-      int temp = grid[row][col].number;
-      grid[row][col].number = gridSolved[row][col];
-      gridSolved[row][col] = temp;
+        grid[row][col].number = gridSolved[row][col];
       }
     }
   }
@@ -121,7 +119,7 @@ void game_update(void) {
     // check if it's wrong
     if (selectedNumber != gridSolved[gameState.selectedRow][gameState.selectedCol] || grid_is_place_valid(gameState.selectedRow, gameState.selectedCol, selectedNumber)) {
       grid[gameState.selectedRow][gameState.selectedCol].isWrong = true;
-      gameState.mistakeCount += 1;
+      gameState.mistakesLeft -= 1;
     }
     else {
       grid[gameState.selectedRow][gameState.selectedCol].isWrong = false;
@@ -132,7 +130,7 @@ void game_update(void) {
   }
 
   // check lose condition
-  if (gameState.mistakeCount >= MAX_MISTAKES_ALLOWED) {
+  if (gameState.mistakesLeft == 0) {
     gameState.isGameLost = true;
   }
 
@@ -147,13 +145,29 @@ void game_draw(void) {
   ClearBackground(RAYWHITE);
 
   // Draw error counter
-//  Vector2 errorCounterOffset;
-//  errorCounterOffset.x = (screenWidth / 2) + ((GRID_SIZE + 1) * SQUARE_SIZE / 2);
-//  errorCounterOffset.y = (screenHeight / 2) - ((GRID_SIZE - 1) * SQUARE_SIZE / 2) + (SQUARE_SIZE * 1.25);
+  Vector2 errorCounterOffset;
+  errorCounterOffset.x = (screenWidth / 2) - (GRID_SIZE / 2 * SQUARE_SIZE) - SQUARE_SIZE / 2;//; - (GRID_SIZE / 2 * SQUARE_SIZE);
+  errorCounterOffset.y = (screenHeight / 2) - (GRID_SIZE / 2 * SQUARE_SIZE);
 
-//  DrawRectangleLinesEx((Rectangle){errorCounterOffset.x, errorCounterOffset.y + SQUARE_SIZE * 0 + SQUARE_SIZE * 0, SQUARE_SIZE * 2, SQUARE_SIZE * 2}, 4, DARKGRAY);
-//  DrawRectangleLinesEx((Rectangle){errorCounterOffset.x, errorCounterOffset.y + SQUARE_SIZE * 2 + SQUARE_SIZE * 1, SQUARE_SIZE * 2, SQUARE_SIZE * 2}, 4, DARKGRAY);
-//  DrawRectangleLinesEx((Rectangle){errorCounterOffset.x, errorCounterOffset.y + SQUARE_SIZE * 4 + SQUARE_SIZE * 2, SQUARE_SIZE * 2, SQUARE_SIZE * 2}, 4, DARKGRAY);
+  if (!gameState.isGameWon) {
+    if (gameState.mistakesLeft == 1) {
+      DrawText("x", errorCounterOffset.x, errorCounterOffset.y, SQUARE_FONT_SIZE, RED);
+    }
+    else if (gameState.mistakesLeft == 2) {
+      DrawText("xx", errorCounterOffset.x, errorCounterOffset.y, SQUARE_FONT_SIZE, RED);
+    }
+    else if (gameState.mistakesLeft == 3) {
+      DrawText("xxx", errorCounterOffset.x, errorCounterOffset.y, SQUARE_FONT_SIZE, RED);
+    }
+  }
+
+  // Draw win/lose text
+  if (gameState.isGameLost) {
+    DrawText("YOU LOSE\t:(", errorCounterOffset.x, errorCounterOffset.y, SQUARE_FONT_SIZE, RED);
+  }
+  else if (gameState.isGameWon) {
+    DrawText("YOU WIN\t:)", errorCounterOffset.x, errorCounterOffset.y, SQUARE_FONT_SIZE, GREEN);
+  }
 
   // Draw gameplay area
   Vector2 gridOffset;
@@ -197,7 +211,7 @@ void game_draw(void) {
         textColor = BLACK;
       }
       else if (grid[row][col].isWrong) {
-        textColor = MAROON;
+        textColor = RED;
       }
       else if (grid[row][col].isHint) {
         textColor = DARKGREEN;
