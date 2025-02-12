@@ -29,7 +29,7 @@ int main(void) {
       game_start();
     }
 
-    game_update();
+    game_input();
     game_draw();
   }
 

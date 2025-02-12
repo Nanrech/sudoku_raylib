@@ -17,7 +17,7 @@ void game_start(void) {
 
   gameState.mistakesLeft = MAX_MISTAKES_ALLOWED;
 
-  game_deselect();
+  game_square_deselect();
 
   grid_clear();
   grid_load_random_seed();
@@ -26,7 +26,7 @@ void game_start(void) {
 }
 
 
-void game_update(void) {
+void game_input(void) {
   // get mouse position
   Vector2 mousePos = GetMousePosition();
 
@@ -44,7 +44,7 @@ void game_update(void) {
     return;
   }
 
-  // TODO: remove
+  // Hint
   if (IsKeyReleased(KEY_H)) {
     if (gameState.isAnySquareSelected && !gameState.isHintUsed) {
       grid[gameState.selectedRow][gameState.selectedCol].number = gridSolved[gameState.selectedRow][gameState.selectedCol];
@@ -53,22 +53,17 @@ void game_update(void) {
 
       gameState.isHintUsed = true;
 
-      game_deselect();
+      game_square_deselect();
     }
   }
 
-  // TODO: remove
+  // Autosolve
   if (IsKeyReleased(KEY_S)) {
     for (int row = 0; row < GRID_SIZE; row++) {
       for (int col = 0; col < GRID_SIZE; col++) {
         grid[row][col].number = gridSolved[row][col];
       }
     }
-  }
-
-  // TODO: remove
-  if (IsKeyReleased(KEY_T)) {
-    grid_vertical_flip();
   }
 
   // select cell
@@ -90,10 +85,10 @@ void game_update(void) {
         if (CheckCollisionPointRec(mousePos, (Rectangle){gridOffset.x, gridOffset.y, SQUARE_SIZE, SQUARE_SIZE})) {
           // clicking a cell again deselects it
           if (gameState.selectedRow == row && gameState.selectedCol == col) {
-            game_deselect();
+            game_square_deselect();
           }
           else {
-            game_select(row, col);
+            game_square_select(row, col);
           }
         }
         gridOffset.x += SQUARE_SIZE;
@@ -126,7 +121,7 @@ void game_update(void) {
     }
 
     // deselect square
-    game_deselect();
+    game_square_deselect();
   }
 
   // check lose condition
@@ -168,6 +163,13 @@ void game_draw(void) {
   else if (gameState.isGameWon) {
     DrawText("YOU WIN\t:)", errorCounterOffset.x, errorCounterOffset.y, SQUARE_FONT_SIZE, GREEN);
   }
+
+  // Draw info text
+  Vector2 infoOffset;
+  infoOffset.x = (screenWidth / 2) - (GRID_SIZE / 2 * SQUARE_SIZE) - SQUARE_SIZE / 2;
+  infoOffset.y = (screenHeight / 2) + 50 + SQUARE_FONT_SIZE + (GRID_SIZE / 2 * SQUARE_SIZE);
+
+  DrawText("[R] to restart\n[H] to reveal one cell", infoOffset.x, infoOffset.y, SQUARE_FONT_SIZE, RED);
 
   // Draw gameplay area
   Vector2 gridOffset;
@@ -222,7 +224,12 @@ void game_draw(void) {
 
       // draw text, 0 means empty
       if (grid[row][col].number != 0) {
-        DrawText(TextFormat("%d", grid[row][col].number), gridOffset.x + (SQUARE_SIZE / 4), gridOffset.y + (SQUARE_SIZE / 5), SQUARE_FONT_SIZE, textColor);
+        DrawText(
+          TextFormat("%d", grid[row][col].number),
+          gridOffset.x + (SQUARE_SIZE / 4), gridOffset.y + (SQUARE_SIZE / 5),
+          SQUARE_FONT_SIZE,
+          textColor
+        );
       }
 
       // draw surrounding square of each cell
@@ -265,13 +272,13 @@ void game_reset(void) {
   gameState.isGameInit = false;
 }
 
-void game_select(int row, int col) {
+void game_square_select(int row, int col) {
   gameState.isAnySquareSelected = true;
   gameState.selectedRow = row;
   gameState.selectedCol = col;
 }
 
-void game_deselect(void) {
+void game_square_deselect(void) {
   gameState.isAnySquareSelected = false;
   gameState.selectedRow = -1;
   gameState.selectedCol = -1;
