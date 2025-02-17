@@ -3,4 +3,5 @@ include/raylib.h
 obj
 lib
 notes
+mock.png
 *.exe
