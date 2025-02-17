@@ -26,49 +26,6 @@ void grid_clear(void) {
   gameState.isGameInit = true;
 }
 
-bool grid_is_solved(void) {
-  for (int row = 0; row < GRID_SIZE; row++) {
-    for (int col = 0; col < GRID_SIZE; col++) {
-      if (grid[row][col].number != gridSolved[row][col]) {
-        return false;
-      }
-    }
-  }
-  // else
-  return true;
-}
-
-bool grid_is_place_valid(int row, int col, int n) {
-  // check if n is already in row
-  for (int i = 0; i < GRID_SIZE; i++) {
-    if (grid[row][i].number == n) {
-      return false;
-    }
-  }
-
-  // check if n is already in column
-  for (int i = 0; i < GRID_SIZE; i++) {
-    if (grid[i][col].number == n) {
-      return false;
-    }
-  }
-
-  // check 3x3 submatrix
-  int startRow = row - (row % 3);
-  int startCol = col - (col % 3);
-
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 3; j++) {
-      if (grid[startRow + i][startCol + j].number == n) {
-        return false;
-      }
-    }
-  }
-
-  // if everything checks out, it's safe to place
-  return true;
-}
-
 void grid_load_random_seed(void) {
   int seedNumber = rand() % SEED_AMOUNT;
   int seedStart = seedNumber * (SEED_LEN * 2);
@@ -104,55 +61,6 @@ void grid_load_random_seed(void) {
   }
 }
 
-void grid_randomly_mutate(void) {
-  /*
-    - rotate the whole thing by 90 / 180 / 270 degrees
-    - flip horizontally
-    - flip vertically
-  */
-
-  // 0 -> no rotation
-  // 1 -> 90º
-  // 2 -> 180º
-  // 3 -> 270º
-  int rngRotations = rand() % 4;
-
-  TraceLog(LOG_WARNING, TextFormat("rngRotations %d", rngRotations));
-  while (rngRotations != 0) {
-    grid_rotate_90();
-    rngRotations -= 1;
-  }
-
-  //
-
-  // 0 -> no flip
-  // 1 -> horizontal flip
-  // 2 -> vertical flip
-  // 3 -> horizontal, then vertical flip
-  // 4 -> vertical, then horizontal flip
-  int rngFlips = rand() % 5;
-
-  if (rngFlips == 1) {
-    grid_horizontal_flip();
-  }
-  else if (rngFlips == 2) {
-    grid_vertical_flip();
-  }
-  else if (rngFlips == 3) {
-    grid_horizontal_flip();
-    grid_vertical_flip();
-  }
-  else if (rngFlips == 4) {
-    grid_vertical_flip();
-    grid_horizontal_flip();
-  }
-
-  TraceLog(LOG_WARNING, TextFormat("rngFlips %d", rngFlips));
-}
-
-// TODO: Simplify
-void grid_rotate(int times) {}
-
 void grid_rotate_90(void) {
   // Transpose
   for (int row = 0; row < GRID_SIZE; row++) {
@@ -184,9 +92,6 @@ void grid_rotate_90(void) {
     }
   }
 }
-
-// TODO: Unify
-void grid_flip(int mode) {}
 
 void grid_horizontal_flip(void) {
   int aux[GRID_SIZE][GRID_SIZE] = {0};
@@ -240,6 +145,52 @@ void grid_vertical_flip(void) {
   }
 }
 
+void grid_randomly_mutate(void) {
+  /*
+    - rotate the whole thing by 90 / 180 / 270 degrees
+    - flip horizontally
+    - flip vertically
+  */
+
+  // 0 -> no rotation
+  // 1 -> 90º
+  // 2 -> 180º
+  // 3 -> 270º
+  int rngRotations = rand() % 4;
+
+  TraceLog(LOG_WARNING, TextFormat("rngRotations %d", rngRotations));
+  while (rngRotations != 0) {
+    grid_rotate_90();
+    rngRotations -= 1;
+  }
+
+  //
+
+  // 0 -> no flip
+  // 1 -> horizontal flip
+  // 2 -> vertical flip
+  // 3 -> horizontal, then vertical flip
+  // 4 -> vertical, then horizontal flip
+  int rngFlips = rand() % 5;
+
+  if (rngFlips == 1) {
+    grid_horizontal_flip();
+  }
+  else if (rngFlips == 2) {
+    grid_vertical_flip();
+  }
+  else if (rngFlips == 3) {
+    grid_horizontal_flip();
+    grid_vertical_flip();
+  }
+  else if (rngFlips == 4) {
+    grid_vertical_flip();
+    grid_horizontal_flip();
+  }
+
+  TraceLog(LOG_WARNING, TextFormat("rngFlips %d", rngFlips));
+}
+
 void grid_mark_pregenerated(void) {
   for (int row = 0; row < GRID_SIZE; row++) {
     for (int col = 0; col < GRID_SIZE; col++) {
@@ -248,4 +199,16 @@ void grid_mark_pregenerated(void) {
       }
     }
   }
+}
+
+bool grid_is_solved(void) {
+  for (int row = 0; row < GRID_SIZE; row++) {
+    for (int col = 0; col < GRID_SIZE; col++) {
+      if (grid[row][col].number != gridSolved[row][col]) {
+        return false;
+      }
+    }
+  }
+  // else
+  return true;
 }

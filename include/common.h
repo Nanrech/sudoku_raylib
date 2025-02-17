@@ -5,12 +5,16 @@
 #include <stdlib.h>
 
 #define GRID_SIZE 9
+
 #define MAX_MISTAKES_ALLOWED 3
+
 #define SEED_LEN 81
 #define SEED_AMOUNT 5
+
 #define COLOR_HIGHLIGHT CLITERAL(Color){ 213, 213, 242, 255 }
-#define COLOR_SELECTED CLITERAL(Color){ 176, 176, 209, 255 }
-#define COLOR_SELECTED_2 CLITERAL(Color){ 154, 154, 184, 255 }
+#define COLOR_MATCHING  CLITERAL(Color){ 176, 176, 209, 255 }
+#define COLOR_SELECTED  CLITERAL(Color){ 154, 154, 184, 255 }
+
 #define SQUARE_SIZE 40
 #define SQUARE_FONT_SIZE (SQUARE_SIZE - (SQUARE_SIZE / 4))
 

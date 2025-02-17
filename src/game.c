@@ -25,6 +25,9 @@ void game_start(void) {
   grid_mark_pregenerated();
 }
 
+void game_reset(void) {
+  gameState.isGameInit = false;
+}
 
 void game_input(void) {
   // get mouse position
@@ -35,8 +38,8 @@ void game_input(void) {
 
   // restart
   if (IsKeyReleased(KEY_R)) {
-  // TraceLog(LOG_INFO, TextFormat("%d %d %d %d %d %d %d %d %d", numberBag[0], numberBag[1], numberBag[2], numberBag[3], numberBag[4], numberBag[5], numberBag[6], numberBag[7], numberBag[8]));
     game_reset();
+    return;
   }
 
   // if the game is over (either win or lose) reject any grid input
@@ -68,9 +71,6 @@ void game_input(void) {
 
   // select cell
   if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-    // set isAnySquareSelected to false so that clicking outside the grid to deselect works
-    gameState.isAnySquareSelected = false;
-
     // calculate which square was hit (if any)
     Vector2 gridOffset;
     gridOffset.x = (screenWidth / 2) - (GRID_SIZE * SQUARE_SIZE / 2);
@@ -108,11 +108,11 @@ void game_input(void) {
     }
 
     // set number
-    int selectedNumber = keyPressed - KEY_ONE + 1;
+    int selectedNumber = keyPressed - KEY_ZERO;
     grid[gameState.selectedRow][gameState.selectedCol].number = selectedNumber;
 
     // check if it's wrong
-    if (selectedNumber != gridSolved[gameState.selectedRow][gameState.selectedCol] || grid_is_place_valid(gameState.selectedRow, gameState.selectedCol, selectedNumber)) {
+    if (selectedNumber != gridSolved[gameState.selectedRow][gameState.selectedCol]) {
       grid[gameState.selectedRow][gameState.selectedCol].isWrong = true;
       gameState.mistakesLeft -= 1;
     }
@@ -135,6 +135,19 @@ void game_input(void) {
   }
 }
 
+void game_square_select(int row, int col) {
+  gameState.isAnySquareSelected = true;
+  gameState.selectedRow = row;
+  gameState.selectedCol = col;
+}
+
+void game_square_deselect(void) {
+  gameState.isAnySquareSelected = false;
+  gameState.selectedRow = -1;
+  gameState.selectedCol = -1;
+}
+
+// this one is way too big
 void game_draw(void) {
   BeginDrawing();
   ClearBackground(RAYWHITE);
@@ -190,7 +203,7 @@ void game_draw(void) {
         // highlight selected square
         // if number == 0 OR if the current number is wrong
         if (row == gameState.selectedRow && col == gameState.selectedCol && (grid[gameState.selectedRow][gameState.selectedCol].number == 0 || grid[gameState.selectedRow][gameState.selectedCol].isWrong)) {
-          DrawRectangle(gridOffset.x, gridOffset.y, SQUARE_SIZE, SQUARE_SIZE, COLOR_SELECTED_2);
+          DrawRectangle(gridOffset.x, gridOffset.y, SQUARE_SIZE, SQUARE_SIZE, COLOR_SELECTED);
         }
 
         // if selected square is 0, highlight relevant squares
@@ -202,7 +215,7 @@ void game_draw(void) {
 
         // highlight squares with the same (non 0) number
         else if (grid[row][col].number == selectedNumber && selectedNumber != 0) {
-          DrawRectangle(gridOffset.x, gridOffset.y, SQUARE_SIZE, SQUARE_SIZE, COLOR_SELECTED);
+          DrawRectangle(gridOffset.x, gridOffset.y, SQUARE_SIZE, SQUARE_SIZE, COLOR_MATCHING);
         }
       }
 
@@ -266,20 +279,4 @@ void game_draw(void) {
   );
 
   EndDrawing();
-}
-
-void game_reset(void) {
-  gameState.isGameInit = false;
-}
-
-void game_square_select(int row, int col) {
-  gameState.isAnySquareSelected = true;
-  gameState.selectedRow = row;
-  gameState.selectedCol = col;
-}
-
-void game_square_deselect(void) {
-  gameState.isAnySquareSelected = false;
-  gameState.selectedRow = -1;
-  gameState.selectedCol = -1;
 }
